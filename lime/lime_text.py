@@ -451,7 +451,7 @@ class LimeTextExplainer(object):
         Mudança
         """
         # Necessário mudar variavel labels no caso de ser regressão
-        if if self.mode == "regression":
+        if self.mode == "regression":
             #ret_exp.predicted_value = predicted_value
             #ret_exp.min_value = min_y
             #ret_exp.max_value = max_y
