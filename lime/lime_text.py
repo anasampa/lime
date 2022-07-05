@@ -375,7 +375,8 @@ class LimeTextExplainer(object):
                          num_features=10,
                          num_samples=5000,
                          distance_metric='cosine',
-                         model_regressor=None):
+                         model_regressor=None,
+                         pair=False):
         """Generates explanations for a prediction.
 
         First, we generate neighborhood data by randomly hiding features from
