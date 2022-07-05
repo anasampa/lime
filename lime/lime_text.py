@@ -313,7 +313,8 @@ class LimeTextExplainer(object):
                  bow=True,
                  mask_string=None,
                  random_state=None,
-                 char_level=False):
+                 char_level=False,
+                 pair=False):
         """Init function.
 
         Args:
