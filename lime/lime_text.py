@@ -375,8 +375,8 @@ class LimeTextExplainer(object):
                          num_features=10,
                          num_samples=5000,
                          distance_metric='cosine',
-                         model_regressor=None,
-                         pair=False):
+                         model_regressor=None
+                         ):
         """Generates explanations for a prediction.
 
         First, we generate neighborhood data by randomly hiding features from
@@ -405,7 +405,21 @@ class LimeTextExplainer(object):
             An Explanation object (see explanation.py) with the corresponding
             explanations.
         """
+        '''
+        Começo minha mudança aqui
+        '''
 
+        if self.pair == True:
+            try:
+                pair = text_instance.split('[SEP]')
+                s1 = pair[0]
+                s2 = pair[1]
+            except:
+                raise TypeError("Sentences must be separated by [SEP]")
+
+        '''
+        Termino a mudança
+        '''
         indexed_string = (IndexedCharacters(
             text_instance, bow=self.bow, mask_string=self.mask_string)
                           if self.char_level else
