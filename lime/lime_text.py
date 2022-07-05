@@ -314,7 +314,8 @@ class LimeTextExplainer(object):
                  mask_string=None,
                  random_state=None,
                  char_level=False,
-                 pair=False):
+                 pair=False,
+                 mode="classification"):
         """Init function.
 
         Args:
@@ -365,7 +366,15 @@ class LimeTextExplainer(object):
         self.mask_string = mask_string
         self.split_expression = split_expression
         self.char_level = char_level
+        """
+        Mudança
+        """
         self.pair = pair
+        self.mode = mode
+
+        """
+        Término mudança
+        """
 
     def explain_instance(self,
                          text_instance,
@@ -405,9 +414,10 @@ class LimeTextExplainer(object):
             An Explanation object (see explanation.py) with the corresponding
             explanations.
         """
-        '''
-        Começo minha mudança aqui
-        '''
+
+        """
+        Mudança
+        """
 
         if self.pair == True:
             try:
@@ -415,11 +425,12 @@ class LimeTextExplainer(object):
                 s1 = pair[0]
                 s2 = pair[1]
             except:
-                raise TypeError("Sentences must be separated by [SEP]")
+                raise TypeError("Sentences must be separated by [SEP] token.")
 
-        '''
-        Termino a mudança
-        '''
+        """
+        Término a mudança
+        """
+
         indexed_string = (IndexedCharacters(
             text_instance, bow=self.bow, mask_string=self.mask_string)
                           if self.char_level else
@@ -436,10 +447,24 @@ class LimeTextExplainer(object):
                                           class_names=self.class_names,
                                           random_state=self.random_state)
         ret_exp.predict_proba = yss[0]
+        """
+        Mudança
+        """
+        # Necessário mudar variavel labels no caso de ser regressão
+        if if self.mode == "regression":
+            #ret_exp.predicted_value = predicted_value
+            #ret_exp.min_value = min_y
+            #ret_exp.max_value = max_y
+            labels = [0]
+        """
+        Término mudança
+        """
+
         if top_labels:
             labels = np.argsort(yss[0])[-top_labels:]
             ret_exp.top_labels = list(labels)
             ret_exp.top_labels.reverse()
+
         for label in labels:
             (ret_exp.intercept[label],
              ret_exp.local_exp[label],
