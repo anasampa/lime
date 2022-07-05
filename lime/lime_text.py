@@ -365,6 +365,7 @@ class LimeTextExplainer(object):
         self.mask_string = mask_string
         self.split_expression = split_expression
         self.char_level = char_level
+        self.pair = pair
 
     def explain_instance(self,
                          text_instance,
