@@ -474,7 +474,7 @@ class LimeTextExplainer(object):
                 model_regressor=model_regressor,
                 feature_selection=self.feature_selection)
         return ret_exp
-b
+
     def __data_labels_distances(self,
                                 indexed_string,
                                 classifier_fn,
