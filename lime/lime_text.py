@@ -539,17 +539,22 @@ class LimeTextExplainer(object):
             return sklearn.metrics.pairwise.pairwise_distances(
                 x, x[0], metric=distance_metric).ravel() * 100
 
-        doc_size = indexed_string.num_words()
-        sample = self.random_state.randint(1, doc_size + 1, num_samples - 1)
-        data = np.ones((num_samples, doc_size))
-        data[0] = np.ones(doc_size)
-        features_range = range(doc_size)
-        inverse_data = [indexed_string.raw_string()]
-        for i, size in enumerate(sample, start=1):
-            inactive = self.random_state.choice(features_range, size,
-                                                replace=False)
-            data[i, inactive] = 0
-            inverse_data.append(indexed_string.inverse_removing(inactive))
+        def neighborhood_text_samples(indexed_string):
+            doc_size = indexed_string.num_words()
+            sample = self.random_state.randint(1, doc_size + 1, num_samples - 1)
+            data = np.ones((num_samples, doc_size))
+            data[0] = np.ones(doc_size)
+            features_range = range(doc_size)
+            inverse_data = [indexed_string.raw_string()]
+            for i, size in enumerate(sample, start=1):
+                inactive = self.random_state.choice(features_range, size,
+                                                    replace=False)
+                data[i, inactive] = 0
+                inverse_data.append(indexed_string.inverse_removing(inactive))
+            return inverse_data
+
+        inverse_data = neighborhood_text_samples(indexed_string)
+
         labels = classifier_fn(inverse_data)
         distances = distance_fn(sp.sparse.csr_matrix(data))
         return data, labels, distances
