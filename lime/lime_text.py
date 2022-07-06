@@ -551,9 +551,9 @@ class LimeTextExplainer(object):
                                                     replace=False)
                 data[i, inactive] = 0
                 inverse_data.append(indexed_string.inverse_removing(inactive))
-            return inverse_data
+            return inverse_data, data
 
-        inverse_data = neighborhood_text_samples(indexed_string)
+        inverse_data, data = neighborhood_text_samples(indexed_string)
 
         labels = classifier_fn(inverse_data)
         distances = distance_fn(sp.sparse.csr_matrix(data))
