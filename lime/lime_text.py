@@ -450,20 +450,39 @@ class LimeTextExplainer(object):
         """
         Mudança
         """
-        # Necessário mudar variavel labels no caso de ser regressão
+
         if self.mode == "regression":
-            #ret_exp.predicted_value = predicted_value
-            #ret_exp.min_value = min_y
-            #ret_exp.max_value = max_y
+            try:
+                if len(yss.shape) != 1 and len(yss[0].shape) == 1:
+                    yss = np.array([v[0] for v in yss])
+                assert isinstance(yss, np.ndarray) and len(yss.shape) == 1
+            except AssertionError:
+                raise ValueError("Your model needs to output single-dimensional \
+                    numpyarrays, not arrays of {} dimensions".format(yss.shape))
+
+            predicted_value = yss[0]
+            min_y = min(yss)
+            max_y = max(yss)
+
+            # add a dimension to be compatible with downstream machinery
+            yss = yss[:, np.newaxis]
+
+
+        # Necessário mudar variavel labels no caso de ser regressão
+        #if self.mode == "regression":
+            ret_exp.predicted_value = predicted_value
+            ret_exp.min_value = min_y
+            ret_exp.max_value = max_y
             labels = [0]
         """
         Término mudança
         """
-
-        if top_labels:
-            labels = np.argsort(yss[0])[-top_labels:]
-            ret_exp.top_labels = list(labels)
-            ret_exp.top_labels.reverse()
+        # Se for classificação
+        else:
+            if top_labels:
+                labels = np.argsort(yss[0])[-top_labels:]
+                ret_exp.top_labels = list(labels)
+                ret_exp.top_labels.reverse()
 
         for label in labels:
             (ret_exp.intercept[label],
@@ -473,6 +492,16 @@ class LimeTextExplainer(object):
                 data, yss, distances, label, num_features,
                 model_regressor=model_regressor,
                 feature_selection=self.feature_selection)
+        """
+        Mudança
+        """
+        if self.mode == "regression":
+            ret_exp.intercept[1] = ret_exp.intercept[0]
+            ret_exp.local_exp[1] = [x for x in ret_exp.local_exp[0]]
+            ret_exp.local_exp[0] = [(i, -1 * j) for i, j in ret_exp.local_exp[1]]
+        """
+        Término mudança
+        """
         return ret_exp
 
     def __data_labels_distances(self,
