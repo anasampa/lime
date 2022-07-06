@@ -415,28 +415,34 @@ class LimeTextExplainer(object):
             explanations.
         """
 
+        # Transformei processo em função para usar duas vezes no caso de pares como input.
+        def indexed_string_text(text_instance):
+            indexed_string = (IndexedCharacters(
+                text_instance, bow=self.bow, mask_string=self.mask_string)
+                              if self.char_level else
+                              IndexedString(text_instance, bow=self.bow,
+                                            split_expression=self.split_expression,
+                                            mask_string=self.mask_string))
+            return indexed_string
+
         """
         Mudança
         """
-
+        # Ajuste do index_string para dois textos no caso de pares como input
         if self.pair == True:
             try:
                 pair = text_instance.split('[SEP]')
-                s1 = pair[0]
-                s2 = pair[1]
+                text1 = pair[0]
+                text2 = pair[1]
             except:
                 raise TypeError("Sentences must be separated by [SEP] token.")
-
+            indexed_string = (indexed_string_text(text1),indexed_string_text(text2))
+        else:
+            indexed_string = indexed_string_text(text_instance)
         """
         Término a mudança
         """
 
-        indexed_string = (IndexedCharacters(
-            text_instance, bow=self.bow, mask_string=self.mask_string)
-                          if self.char_level else
-                          IndexedString(text_instance, bow=self.bow,
-                                        split_expression=self.split_expression,
-                                        mask_string=self.mask_string))
         domain_mapper = TextDomainMapper(indexed_string)
         data, yss, distances = self.__data_labels_distances(
             indexed_string, classifier_fn, num_samples,
@@ -553,7 +559,18 @@ class LimeTextExplainer(object):
                 inverse_data.append(indexed_string.inverse_removing(inactive))
             return inverse_data, data
 
-        inverse_data, data = neighborhood_text_samples(indexed_string)
+        if self.pair == True:
+            # Procedimento para dois textos
+            try:
+                inverse_data1,data1 = neighborhood_text_samples(indexed_string[0])
+                inverse_data2,data2 = neighborhood_text_samples(indexed_string[1])
+                inverse_data = [t1+'[SEP]'+ for i, j in zip(inverse_data1,inverse_data2)]
+                data = np.concatenate((data1, data2), axis=1)
+            except:
+                raise TypeError("Problema no index_string")
+        else:
+            # Entrada de um texto apenas, continua normal
+            inverse_data, data = neighborhood_text_samples(indexed_string)
 
         labels = classifier_fn(inverse_data)
         distances = distance_fn(sp.sparse.csr_matrix(data))
