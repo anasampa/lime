@@ -445,7 +445,8 @@ class LimeTextExplainer(object):
             self.class_names = [str(x) for x in range(yss[0].shape[0])]
         ret_exp = explanation.Explanation(domain_mapper=domain_mapper,
                                           class_names=self.class_names,
-                                          random_state=self.random_state)
+                                          random_state=self.random_state,
+                                          mode=self.mode)
         ret_exp.predict_proba = yss[0]
         """
         Mudança
