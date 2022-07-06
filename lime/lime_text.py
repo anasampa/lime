@@ -474,11 +474,11 @@ class LimeTextExplainer(object):
             ret_exp.min_value = min_y
             ret_exp.max_value = max_y
             labels = [0]
+        else:
         """
         Término mudança
         """
         # Se for classificação
-        else:
             if top_labels:
                 labels = np.argsort(yss[0])[-top_labels:]
                 ret_exp.top_labels = list(labels)
