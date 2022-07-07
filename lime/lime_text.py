@@ -436,7 +436,7 @@ class LimeTextExplainer(object):
                 text1 = pair[0]
                 text2 = pair[1]
             except:
-                raise TypeError("Pair of texts must be separated by [SEP] token. Example: 'This is the first text. [SEP] This is the second text.'"")
+                raise TypeError("Pair of texts must be separated by [SEP] token. Example: 'This is the first text. [SEP] This is the second text.'")
             indexed_string_for_data_labels = (indexed_string_text(text1),indexed_string_text(text2))
         else:
             # Não é pair input.
