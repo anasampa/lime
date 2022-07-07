@@ -141,6 +141,11 @@ class IndexedString(object):
         if not bow:
             self.positions = np.array(self.positions)
 
+    # Mudando aqui.
+    self.vocab = vocab
+    def vocab_id(self,token):
+        return self.vocab[token]
+
     def raw_string(self):
         """Returns the original raw string"""
         return self.raw
@@ -568,7 +573,8 @@ class LimeTextExplainer(object):
                 # Outra opção seria ao invés de criar dois objetos indexed_string (um por texto), fazer uma verificação aqui.
                 # A verificação seria para tirar o token [SEP] das opções de inativação.
                 # Os textos seriam tratados como um só sem remoção do token [SEP] nas variações.
-                inactive = np.delete(inactive, np.where(inactive==2))
+                sep_id = indexed_string.vocab_id('[SEP]')
+                inactive = np.delete(inactive, np.where(inactive==sep_id))
                 data[i, inactive] = 0
                 inverse_data.append(indexed_string.inverse_removing(inactive))
             return inverse_data, data
