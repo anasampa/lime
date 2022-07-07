@@ -572,10 +572,6 @@ class LimeTextExplainer(object):
             return inverse_data, data
 
         if self.pair == True:
-            # Procedimento para dois textos
-            pair = text_instance.split('[SEP]')
-            text1 = pair[0]
-            text2 = pair[1]
             try:
                 # Se é um par, o indexed_string será uma tupla com dois objetos(indexed_string1,indexed_string1).
                 inverse_data1, data1 = neighborhood_text_samples(indexed_string_for_data_labels[0])
