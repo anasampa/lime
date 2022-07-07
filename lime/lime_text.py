@@ -435,6 +435,7 @@ class LimeTextExplainer(object):
                 pair = text_instance.split(' [SEP] ')
                 text1 = pair[0]
                 text2 = pair[1]
+                text_instance = text1 + ' ' + text2
             except:
                 raise TypeError("Pair of texts must be separated by [SEP] token. Example: 'This is the first text. [SEP] This is the second text.'")
             indexed_string_for_data_labels = (indexed_string_text(text1),indexed_string_text(text2))
@@ -567,23 +568,24 @@ class LimeTextExplainer(object):
                 # Outra opção seria ao invés de criar dois objetos indexed_string (um por texto), fazer uma verificação aqui.
                 # A verificação seria para tirar o token [SEP] das opções de inativação.
                 # Os textos seriam tratados como um só sem remoção do token [SEP] nas variações.
-                data[i, inactive] = 0
+                if inactive != 2:
+                    data[i, inactive] = 0
                 inverse_data.append(indexed_string.inverse_removing(inactive))
             return inverse_data, data
 
         if self.pair == True:
             try:
-                # Se é um par, o indexed_string será uma tupla com dois objetos(indexed_string1,indexed_string1).
+                # Se é um par, o indexed_string será um trio com dois objetos(indexed_string1,indexed_string1).
                 inverse_data1, data1 = neighborhood_text_samples(indexed_string_for_data_labels[0])
                 inverse_data2, data2 = neighborhood_text_samples(indexed_string_for_data_labels[1])
                 inverse_data = [i+' [SEP] '+j for i, j in zip(inverse_data1,inverse_data2)]
-                sep = np.ones((data1.shape[0],1))
-                data = np.concatenate((data1,sep,sep,sep, data2), axis=1)
+                #sep = np.ones((data1.shape[0],1))
+                data = np.concatenate((data1, data2), axis=1)
             except:
                 raise TypeError("Problema no index_string")
         else:
             # Entrada de um texto apenas, continua normal
-            inverse_data, data = neighborhood_text_samples(indexed_string)
+            inverse_data, data = neighborhood_text_samples(indexed_string_for_data_labels)
 
         labels = classifier_fn(inverse_data)
         distances = distance_fn(sp.sparse.csr_matrix(data))
