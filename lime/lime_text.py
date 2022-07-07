@@ -416,6 +416,7 @@ class LimeTextExplainer(object):
         """
 
         # Transformei processo em função para usar duas vezes no caso de pares como input.
+        # Não foi mudado o código do processo.
         def indexed_string_text(text_instance):
             indexed_string = (IndexedCharacters(
                 text_instance, bow=self.bow, mask_string=self.mask_string)
@@ -426,26 +427,29 @@ class LimeTextExplainer(object):
             return indexed_string
 
         """
-        Mudança
+        Mudança para input como entrada.
         """
-        # Ajuste do index_string para dois textos no caso de pares como input
+        # Ajuste do index_string para dois textos no caso de pares como input.
         if self.pair == True:
             try:
                 pair = text_instance.split('[SEP]')
                 text1 = pair[0]
                 text2 = pair[1]
             except:
-                raise TypeError("Sentences must be separated by [SEP] token.")
-            indexed_string = (indexed_string_text(text1),indexed_string_text(text2))
+                raise TypeError("Pair of texts must be separated by [SEP] token. Example: 'This is the first text. [SEP] This is the second text.'"")
+            indexed_string_for_data_labels = (indexed_string_text(text1),indexed_string_text(text2))
         else:
-            indexed_string = indexed_string_text(text_instance)
+            # Não é pair input.
+            indexed_string_for_data_labels = indexed_string_text(text_instance)
+
+        indexed_string = indexed_string_text(text_instance)
         """
-        Término a mudança
+        Término da mudança.
         """
 
         domain_mapper = TextDomainMapper(indexed_string)
         data, yss, distances = self.__data_labels_distances(
-            indexed_string, classifier_fn, num_samples,
+            indexed_string_for_data_labels, classifier_fn, num_samples,
             distance_metric=distance_metric)
         if self.class_names is None:
             self.class_names = [str(x) for x in range(yss[0].shape[0])]
@@ -454,8 +458,9 @@ class LimeTextExplainer(object):
                                           random_state=self.random_state,
                                           mode=self.mode)
         ret_exp.predict_proba = yss[0]
+
         """
-        Mudança
+        Mudança para regressão.
         """
 
         if self.mode == "regression":
@@ -475,19 +480,20 @@ class LimeTextExplainer(object):
             yss = yss[:, np.newaxis]
 
 
-        # Necessário mudar variavel labels no caso de ser regressão
-        #if self.mode == "regression":
+            # Necessário mudar variavel labels no caso de ser regressão.
             ret_exp.predicted_value = predicted_value
             ret_exp.min_value = min_y
             ret_exp.max_value = max_y
             labels = [0]
         else:
-        #Término mudança
-        # Se for classificação
+            # Se for classificação, continua como antes.
             if top_labels:
                 labels = np.argsort(yss[0])[-top_labels:]
                 ret_exp.top_labels = list(labels)
                 ret_exp.top_labels.reverse()
+        """
+        Término da mudança.
+        """
 
         for label in labels:
             (ret_exp.intercept[label],
@@ -510,7 +516,7 @@ class LimeTextExplainer(object):
         return ret_exp
 
     def __data_labels_distances(self,
-                                indexed_string,
+                                indexed_string_for_data_labels,
                                 classifier_fn,
                                 num_samples,
                                 distance_metric='cosine'):
@@ -546,6 +552,9 @@ class LimeTextExplainer(object):
                 x, x[0], metric=distance_metric).ravel() * 100
 
         def neighborhood_text_samples(indexed_string):
+            # 'inverse_data' é uma lista dos samples alterados. Exemplos de texto gerado próximo ao original.
+            # 'data' é uma representação matriz numérica (np array) do inverse_data como onehot vector.
+            # Importante para calcular distancia entre a intância dada e os exemplos gerados.
             doc_size = indexed_string.num_words()
             sample = self.random_state.randint(1, doc_size + 1, num_samples - 1)
             data = np.ones((num_samples, doc_size))
@@ -555,15 +564,22 @@ class LimeTextExplainer(object):
             for i, size in enumerate(sample, start=1):
                 inactive = self.random_state.choice(features_range, size,
                                                     replace=False)
+                # Outra opção seria ao invés de criar dois objetos indexed_string (um por texto), fazer uma verificação aqui.
+                # A verificação seria para tirar o token [SEP] das opções de inativação.
+                # Os textos seriam tratados como um só sem remoção do token [SEP] nas variações.
                 data[i, inactive] = 0
                 inverse_data.append(indexed_string.inverse_removing(inactive))
             return inverse_data, data
 
         if self.pair == True:
             # Procedimento para dois textos
+            pair = text_instance.split('[SEP]')
+            text1 = pair[0]
+            text2 = pair[1]
             try:
-                inverse_data1,data1 = neighborhood_text_samples(indexed_string[0])
-                inverse_data2,data2 = neighborhood_text_samples(indexed_string[1])
+                # Se é um par, o indexed_string será uma tupla com dois objetos(indexed_string1,indexed_string1).
+                inverse_data1, data1 = neighborhood_text_samples(indexed_string_for_data_labels[0])
+                inverse_data2, data2 = neighborhood_text_samples(indexed_string_for_data_labels[1])
                 inverse_data = [i+'[SEP]'+j for i, j in zip(inverse_data1,inverse_data2)]
                 data = np.concatenate((data1, data2), axis=1)
             except:
