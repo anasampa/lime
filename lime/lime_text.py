@@ -432,7 +432,7 @@ class LimeTextExplainer(object):
         # Ajuste do index_string para dois textos no caso de pares como input.
         if self.pair == True:
             try:
-                pair = text_instance.split('[SEP]')
+                pair = text_instance.split(' [SEP] ')
                 text1 = pair[0]
                 text2 = pair[1]
             except:
@@ -576,7 +576,8 @@ class LimeTextExplainer(object):
                 # Se é um par, o indexed_string será uma tupla com dois objetos(indexed_string1,indexed_string1).
                 inverse_data1, data1 = neighborhood_text_samples(indexed_string_for_data_labels[0])
                 inverse_data2, data2 = neighborhood_text_samples(indexed_string_for_data_labels[1])
-                inverse_data = [i+'[SEP]'+j for i, j in zip(inverse_data1,inverse_data2)]
+                inverse_data = [i+' [SEP] '+j for i, j in zip(inverse_data1,inverse_data2)]
+                sep = np.ones((data1.shape[0],1))
                 data = np.concatenate((data1, data2), axis=1)
             except:
                 raise TypeError("Problema no index_string")
