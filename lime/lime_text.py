@@ -578,7 +578,7 @@ class LimeTextExplainer(object):
                 inverse_data2, data2 = neighborhood_text_samples(indexed_string_for_data_labels[1])
                 inverse_data = [i+' [SEP] '+j for i, j in zip(inverse_data1,inverse_data2)]
                 sep = np.ones((data1.shape[0],1))
-                data = np.concatenate((data1, data2), axis=1)
+                data = np.concatenate((data1,sep, data2), axis=1)
             except:
                 raise TypeError("Problema no index_string")
         else:
