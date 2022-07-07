@@ -138,6 +138,8 @@ class IndexedString(object):
             else:
                 self.inverse_vocab.append(word)
                 self.positions.append(i)
+                # Adicionei o vocab aqui para usar depois
+                vocab[word] = i
         if not bow:
             self.positions = np.array(self.positions)
 
