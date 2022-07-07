@@ -568,8 +568,8 @@ class LimeTextExplainer(object):
                 # Outra opção seria ao invés de criar dois objetos indexed_string (um por texto), fazer uma verificação aqui.
                 # A verificação seria para tirar o token [SEP] das opções de inativação.
                 # Os textos seriam tratados como um só sem remoção do token [SEP] nas variações.
-                if inactive != 2:
-                    data[i, inactive] = 0
+                inactive = np.delete(aa, np.where(==2))
+                data[i, inactive] = 0
                 inverse_data.append(indexed_string.inverse_removing(inactive))
             return inverse_data, data
 
