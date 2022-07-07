@@ -433,17 +433,17 @@ class LimeTextExplainer(object):
         if self.pair == True:
             try:
                 pair = text_instance.split(' [SEP] ')
-                text1 = pair[0]
-                text2 = pair[1]
-                text_instance = text1 + ' ' + text2
+                #text1 = pair[0]
+                #text2 = pair[1]
+                #text_instance = text1 + ' ' + text2
             except:
                 raise TypeError("Pair of texts must be separated by [SEP] token. Example: 'This is the first text. [SEP] This is the second text.'")
-            indexed_string_for_data_labels = (indexed_string_text(text1),indexed_string_text(text2))
-        else:
+            #indexed_string_for_data_labels = (indexed_string_text(text1),indexed_string_text(text2))
+        #else:
             # Não é pair input.
-            indexed_string_for_data_labels = indexed_string_text(text_instance)
+            #indexed_string_for_data_labels = indexed_string_text(text_instance)
 
-        indexed_string = indexed_string_text(text_instance)
+        indexed_string = indexed_string_for_data_labels = indexed_string_text(text_instance)
         """
         Término da mudança.
         """
@@ -573,19 +573,21 @@ class LimeTextExplainer(object):
                 inverse_data.append(indexed_string.inverse_removing(inactive))
             return inverse_data, data
 
-        if self.pair == True:
-            try:
+        #if self.pair == True:
+            #try:
                 # Se é um par, o indexed_string será um trio com dois objetos(indexed_string1,indexed_string1).
-                inverse_data1, data1 = neighborhood_text_samples(indexed_string_for_data_labels[0])
-                inverse_data2, data2 = neighborhood_text_samples(indexed_string_for_data_labels[1])
-                inverse_data = [i+' [SEP] '+j for i, j in zip(inverse_data1,inverse_data2)]
+                #inverse_data1, data1 = neighborhood_text_samples(indexed_string_for_data_labels[0])
+                #inverse_data2, data2 = neighborhood_text_samples(indexed_string_for_data_labels[1])
+                #inverse_data = [i+' [SEP] '+j for i, j in zip(inverse_data1,inverse_data2)]
                 #sep = np.ones((data1.shape[0],1))
-                data = np.concatenate((data1, data2), axis=1)
-            except:
-                raise TypeError("Problema no index_string")
-        else:
+                #data = np.concatenate((data1, data2), axis=1)
+            #except:
+                #raise TypeError("Problema no index_string")
+        #else:
             # Entrada de um texto apenas, continua normal
-            inverse_data, data = neighborhood_text_samples(indexed_string_for_data_labels)
+            #inverse_data, data = neighborhood_text_samples(indexed_string_for_data_labels)
+
+        inverse_data, data = neighborhood_text_samples(indexed_string_for_data_labels)
 
         labels = classifier_fn(inverse_data)
         distances = distance_fn(sp.sparse.csr_matrix(data))
