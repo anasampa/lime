@@ -141,9 +141,9 @@ class IndexedString(object):
         if not bow:
             self.positions = np.array(self.positions)
 
-    '   # Mudando aqui.
+        # Mudando aqui.
         self.vocab = vocab
-        
+
     def vocab_id(self,token):
         return self.vocab[token]
 
