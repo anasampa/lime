@@ -608,7 +608,7 @@ class LimeTextExplainer(object):
             distances = distance_fn(sp.sparse.csr_matrix(data))
         else:
             try:
-                distances = distance_fn(self.vectorize(inverse_data))
+                distances = distance_fn(self.vectorizer(inverse_data))
             except:
                 raise TypeError("Incompatible 'vectorize' function. Expected function that takes list of n strings and returns (n, m) array with respectives m sized vector representations.")
 
