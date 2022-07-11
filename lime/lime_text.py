@@ -604,7 +604,7 @@ class LimeTextExplainer(object):
         inverse_data, data = neighborhood_text_samples(indexed_string_for_data_labels)
 
         labels = classifier_fn(inverse_data)
-        if self.vectorize == None:
+        if self.vectorizer == None:
             distances = distance_fn(sp.sparse.csr_matrix(data))
         else:
             try:
