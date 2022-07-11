@@ -324,7 +324,8 @@ class LimeTextExplainer(object):
                  random_state=None,
                  char_level=False,
                  pair=False,
-                 mode="classification"):
+                 mode="classification",
+                 vectorizer=None):
         """Init function.
 
         Args:
@@ -381,6 +382,8 @@ class LimeTextExplainer(object):
         self.pair = pair
         self.mode = mode
 
+        self.vectorizer = vectorizer
+
         """
         Término mudança
         """
@@ -393,7 +396,7 @@ class LimeTextExplainer(object):
                          num_features=10,
                          num_samples=5000,
                          distance_metric='cosine',
-                         model_regressor=None
+                         model_regressor=None,
                          ):
         """Generates explanations for a prediction.
 
@@ -529,7 +532,8 @@ class LimeTextExplainer(object):
                                 indexed_string_for_data_labels,
                                 classifier_fn,
                                 num_samples,
-                                distance_metric='cosine'):
+                                distance_metric='cosine',
+                                ):
         """Generates a neighborhood around a prediction.
 
         Generates neighborhood data by randomly removing words from
@@ -600,5 +604,12 @@ class LimeTextExplainer(object):
         inverse_data, data = neighborhood_text_samples(indexed_string_for_data_labels)
 
         labels = classifier_fn(inverse_data)
-        distances = distance_fn(sp.sparse.csr_matrix(data))
+        if self.vectorize == None:
+            distances = distance_fn(sp.sparse.csr_matrix(data))
+        else:
+            try:
+                distances = distance_fn(self.vectorize(inverse_data))
+            else:
+                raise TypeError("Incompatible 'vectorize' function. Expected function that takes list of n strings and returns (n, m) array with respectives m sized vector representations.")
+
         return data, labels, distances
