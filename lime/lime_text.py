@@ -609,7 +609,7 @@ class LimeTextExplainer(object):
         else:
             try:
                 distances = distance_fn(self.vectorize(inverse_data))
-            else:
+            except:
                 raise TypeError("Incompatible 'vectorize' function. Expected function that takes list of n strings and returns (n, m) array with respectives m sized vector representations.")
 
         return data, labels, distances
