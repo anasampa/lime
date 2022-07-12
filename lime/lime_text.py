@@ -379,7 +379,6 @@ class LimeTextExplainer(object):
         Mudança
         """
         self.mode = mode
-
         self.vectorizer = vectorizer
 
         """
@@ -443,7 +442,8 @@ class LimeTextExplainer(object):
         # Ajuste do index_string para dois textos no caso de pares como input.
         if multiple_texts:
             try:
-                n_text = len(text_intance)
+                n_text = len(text_instance)
+                self.split_expression = r'\s'
                 text_instance = ' [SEP] '.join(text_instance)
                 #pair = text_instance.split(' [SEP] ')
             except:
