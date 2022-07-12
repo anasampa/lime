@@ -442,12 +442,13 @@ class LimeTextExplainer(object):
         # Ajuste do index_string para dois textos no caso de pares como input.
         if multiple_texts:
             try:
-                if type(text_instance) is list:
-                    self.split_expression = r'\s'
-                    text_instance = ' [SEP] '.join(text_instance)
+                if not isinstance(text_instance, list):
+                    raise TypeError("Expected text_instance as a list of strings when multiple_texts=True.")
+                self.split_expression = r'\s'
+                text_instance = ' [SEP] '.join(text_instance)
                 #pair = text_instance.split(' [SEP] ')
             except:
-                raise TypeError("Expected text_instance as a list of strings when multiple_texts=True.")
+                raise TypeError("Expected list of strings when multiple_texts=True.")
                 #raise TypeError("Pair of texts must be separated by [SEP] token. Example: 'This is the first text. [SEP] This is the second text.'")
             #indexed_string_for_data_labels = (indexed_string_text(text1),indexed_string_text(text2))
         #else:
