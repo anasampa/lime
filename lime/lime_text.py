@@ -442,14 +442,11 @@ class LimeTextExplainer(object):
         Mudança para input como entrada.
         """
         # Ajuste do index_string para dois textos no caso de pares como input.
-        if self.pair == True:
-            try:
-                pair = text_instance.split(' [SEP] ')
-                #text1 = pair[0]
-                #text2 = pair[1]
-                #text_instance = text1 + ' ' + text2
-            except:
-                raise TypeError("Pair of texts must be separated by [SEP] token. Example: 'This is the first text. [SEP] This is the second text.'")
+        #if self.pair == True:
+            #try:
+                #pair = text_instance.split(' [SEP] ')
+            #except:
+                #raise TypeError("Pair of texts must be separated by [SEP] token. Example: 'This is the first text. [SEP] This is the second text.'")
             #indexed_string_for_data_labels = (indexed_string_text(text1),indexed_string_text(text2))
         #else:
             # Não é pair input.
