@@ -323,7 +323,6 @@ class LimeTextExplainer(object):
                  mask_string=None,
                  random_state=None,
                  char_level=False,
-                 pair=False,
                  mode="classification",
                  vectorizer=None):
         """Init function.
@@ -379,7 +378,6 @@ class LimeTextExplainer(object):
         """
         Mudança
         """
-        self.pair = pair
         self.mode = mode
 
         self.vectorizer = vectorizer
@@ -397,6 +395,7 @@ class LimeTextExplainer(object):
                          num_samples=5000,
                          distance_metric='cosine',
                          model_regressor=None,
+                         multiple_texts=False
                          ):
         """Generates explanations for a prediction.
 
@@ -442,10 +441,12 @@ class LimeTextExplainer(object):
         Mudança para input como entrada.
         """
         # Ajuste do index_string para dois textos no caso de pares como input.
-        #if self.pair == True:
-            #try:
+        if multiple_texts:
+            try:
+                ' [SEP] '.join(text_instance)
                 #pair = text_instance.split(' [SEP] ')
-            #except:
+            except:
+                raise TypeError("Expected text_instance as a list of strings when multiple_text=True.")
                 #raise TypeError("Pair of texts must be separated by [SEP] token. Example: 'This is the first text. [SEP] This is the second text.'")
             #indexed_string_for_data_labels = (indexed_string_text(text1),indexed_string_text(text2))
         #else:
