@@ -442,9 +442,9 @@ class LimeTextExplainer(object):
         # Ajuste do index_string para dois textos no caso de pares como input.
         if multiple_texts:
             try:
-                n_text = len(text_instance)
-                self.split_expression = r'\s'
-                text_instance = ' [SEP] '.join(text_instance)
+                if type(text_instance) is list:
+                    self.split_expression = r'\s'
+                    text_instance = ' [SEP] '.join(text_instance)
                 #pair = text_instance.split(' [SEP] ')
             except:
                 raise TypeError("Expected text_instance as a list of strings when multiple_texts=True.")
@@ -573,7 +573,7 @@ class LimeTextExplainer(object):
             data = np.ones((num_samples, doc_size))
             data[0] = np.ones(doc_size)
             features_range = range(doc_size)
-            inverse_data = [indexed_string.raw_string().split('[SEP]')]
+            inverse_data = [indexed_string.raw_string().split(' [SEP] ')]
             for i, size in enumerate(sample, start=1):
                 inactive = self.random_state.choice(features_range, size,
                                                     replace=False)
@@ -583,7 +583,7 @@ class LimeTextExplainer(object):
                 sep_id = indexed_string.vocab_id('[SEP]')
                 inactive = np.delete(inactive, np.where(inactive==sep_id))
                 data[i, inactive] = 0
-                inverse_data.append(indexed_string.inverse_removing(inactive).split('[SEP]'))
+                inverse_data.append(indexed_string.inverse_removing(inactive).split(' [SEP] '))
             return inverse_data, data
 
         #if self.pair == True:
