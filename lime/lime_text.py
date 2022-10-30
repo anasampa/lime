@@ -138,8 +138,17 @@ class IndexedString(object):
             else:
                 self.inverse_vocab.append(word)
                 self.positions.append(i)
+                # Adicionei o vocab aqui para usar com bow=false
+                # vocab só é utilizado neste caso para pegar o a posição do [SEP]
+                vocab[word] = len(vocab)
         if not bow:
             self.positions = np.array(self.positions)
+
+        # Mudando aqui
+        self.vocab = vocab
+
+    def vocab_id(self,token):
+        return self.vocab[token]
 
     def raw_string(self):
         """Returns the original raw string"""
@@ -313,7 +322,9 @@ class LimeTextExplainer(object):
                  bow=True,
                  mask_string=None,
                  random_state=None,
-                 char_level=False):
+                 char_level=False,
+                 mode="classification",
+                 vectorizer=None):
         """Init function.
 
         Args:
@@ -364,6 +375,15 @@ class LimeTextExplainer(object):
         self.mask_string = mask_string
         self.split_expression = split_expression
         self.char_level = char_level
+        """
+        Mudança
+        """
+        self.mode = mode
+        self.vectorizer = vectorizer
+
+        """
+        Término mudança
+        """
 
     def explain_instance(self,
                          text_instance,
@@ -373,7 +393,9 @@ class LimeTextExplainer(object):
                          num_features=10,
                          num_samples=5000,
                          distance_metric='cosine',
-                         model_regressor=None):
+                         model_regressor=None,
+                         multiple_texts=False
+                         ):
         """Generates explanations for a prediction.
 
         First, we generate neighborhood data by randomly hiding features from
@@ -403,26 +425,89 @@ class LimeTextExplainer(object):
             explanations.
         """
 
-        indexed_string = (IndexedCharacters(
-            text_instance, bow=self.bow, mask_string=self.mask_string)
-                          if self.char_level else
-                          IndexedString(text_instance, bow=self.bow,
-                                        split_expression=self.split_expression,
-                                        mask_string=self.mask_string))
+        # Transformei processo em função para usar duas vezes no caso de pares como input.
+        # Não foi mudado o código do processo.
+        def indexed_string_text(text_instance):
+            indexed_string = (IndexedCharacters(
+                text_instance, bow=self.bow, mask_string=self.mask_string)
+                              if self.char_level else
+                              IndexedString(text_instance, bow=self.bow,
+                                            split_expression=self.split_expression,
+                                            mask_string=self.mask_string))
+            return indexed_string
+
+        """
+        Mudança para input como entrada.
+        """
+        # Ajuste do index_string para dois textos no caso de pares como input.
+        if multiple_texts:
+            try:
+                if not isinstance(text_instance, list):
+                    raise TypeError("Expected text_instance as a list of strings when multiple_texts=True.")
+                self.split_expression = r'\s'
+                text_instance = ' [SEP] '.join(text_instance)
+                #pair = text_instance.split(' [SEP] ')
+            except:
+                raise TypeError("Expected list of strings when multiple_texts=True.")
+                #raise TypeError("Pair of texts must be separated by [SEP] token. Example: 'This is the first text. [SEP] This is the second text.'")
+            #indexed_string_for_data_labels = (indexed_string_text(text1),indexed_string_text(text2))
+        #else:
+            # Não é pair input.
+            #indexed_string_for_data_labels = indexed_string_text(text_instance)
+
+        indexed_string = indexed_string_for_data_labels = indexed_string_text(text_instance)
+        """
+        Término da mudança.
+        """
+
         domain_mapper = TextDomainMapper(indexed_string)
         data, yss, distances = self.__data_labels_distances(
-            indexed_string, classifier_fn, num_samples,
+            indexed_string_for_data_labels, classifier_fn, num_samples,
             distance_metric=distance_metric)
         if self.class_names is None:
             self.class_names = [str(x) for x in range(yss[0].shape[0])]
         ret_exp = explanation.Explanation(domain_mapper=domain_mapper,
                                           class_names=self.class_names,
-                                          random_state=self.random_state)
+                                          random_state=self.random_state,
+                                          mode=self.mode)
         ret_exp.predict_proba = yss[0]
-        if top_labels:
-            labels = np.argsort(yss[0])[-top_labels:]
-            ret_exp.top_labels = list(labels)
-            ret_exp.top_labels.reverse()
+
+        """
+        Mudança para regressão.
+        """
+
+        if self.mode == "regression":
+            try:
+                if len(yss.shape) != 1 and len(yss[0].shape) == 1:
+                    yss = np.array([v[0] for v in yss])
+                assert isinstance(yss, np.ndarray) and len(yss.shape) == 1
+            except AssertionError:
+                raise ValueError("Your model needs to output single-dimensional \
+                    numpyarrays, not arrays of {} dimensions".format(yss.shape))
+
+            predicted_value = yss[0]
+            min_y = min(yss)
+            max_y = max(yss)
+
+            # add a dimension to be compatible with downstream machinery
+            yss = yss[:, np.newaxis]
+
+
+            # Necessário mudar variavel labels no caso de ser regressão.
+            ret_exp.predicted_value = predicted_value
+            ret_exp.min_value = min_y
+            ret_exp.max_value = max_y
+            labels = [0]
+        else:
+            # Se for classificação, continua como antes.
+            if top_labels:
+                labels = np.argsort(yss[0])[-top_labels:]
+                ret_exp.top_labels = list(labels)
+                ret_exp.top_labels.reverse()
+        """
+        Término da mudança.
+        """
+
         for label in labels:
             (ret_exp.intercept[label],
              ret_exp.local_exp[label],
@@ -431,13 +516,24 @@ class LimeTextExplainer(object):
                 data, yss, distances, label, num_features,
                 model_regressor=model_regressor,
                 feature_selection=self.feature_selection)
+        """
+        Mudança
+        """
+        if self.mode == "regression":
+            ret_exp.intercept[1] = ret_exp.intercept[0]
+            ret_exp.local_exp[1] = [x for x in ret_exp.local_exp[0]]
+            ret_exp.local_exp[0] = [(i, -1 * j) for i, j in ret_exp.local_exp[1]]
+        """
+        Término mudança
+        """
         return ret_exp
 
     def __data_labels_distances(self,
-                                indexed_string,
+                                indexed_string_for_data_labels,
                                 classifier_fn,
                                 num_samples,
-                                distance_metric='cosine'):
+                                distance_metric='cosine',
+                                ):
         """Generates a neighborhood around a prediction.
 
         Generates neighborhood data by randomly removing words from
@@ -469,17 +565,51 @@ class LimeTextExplainer(object):
             return sklearn.metrics.pairwise.pairwise_distances(
                 x, x[0], metric=distance_metric).ravel() * 100
 
-        doc_size = indexed_string.num_words()
-        sample = self.random_state.randint(1, doc_size + 1, num_samples - 1)
-        data = np.ones((num_samples, doc_size))
-        data[0] = np.ones(doc_size)
-        features_range = range(doc_size)
-        inverse_data = [indexed_string.raw_string()]
-        for i, size in enumerate(sample, start=1):
-            inactive = self.random_state.choice(features_range, size,
-                                                replace=False)
-            data[i, inactive] = 0
-            inverse_data.append(indexed_string.inverse_removing(inactive))
+        def neighborhood_text_samples(indexed_string):
+            # 'inverse_data' é uma lista dos samples alterados. Exemplos de texto gerado próximo ao original.
+            # 'data' é uma representação matriz numérica (np array) do inverse_data como onehot vector.
+            # Importante para calcular distancia entre a intância dada e os exemplos gerados.
+            doc_size = indexed_string.num_words()
+            sample = self.random_state.randint(1, doc_size + 1, num_samples - 1)
+            data = np.ones((num_samples, doc_size))
+            data[0] = np.ones(doc_size)
+            features_range = range(doc_size)
+            inverse_data = [indexed_string.raw_string().split(' [SEP] ')]
+            for i, size in enumerate(sample, start=1):
+                inactive = self.random_state.choice(features_range, size,
+                                                    replace=False)
+                # Outra opção seria ao invés de criar dois objetos indexed_string (um por texto), fazer uma verificação aqui.
+                # A verificação seria para tirar o token [SEP] das opções de inativação.
+                # Os textos seriam tratados como um só sem remoção do token [SEP] nas variações.
+                sep_id = indexed_string.vocab_id('[SEP]')
+                inactive = np.delete(inactive, np.where(inactive==sep_id))
+                data[i, inactive] = 0
+                inverse_data.append(indexed_string.inverse_removing(inactive).split(' [SEP] '))
+            return inverse_data, data
+
+        #if self.pair == True:
+            #try:
+                # Se é um par, o indexed_string será um trio com dois objetos(indexed_string1,indexed_string1).
+                #inverse_data1, data1 = neighborhood_text_samples(indexed_string_for_data_labels[0])
+                #inverse_data2, data2 = neighborhood_text_samples(indexed_string_for_data_labels[1])
+                #inverse_data = [i+' [SEP] '+j for i, j in zip(inverse_data1,inverse_data2)]
+                #sep = np.ones((data1.shape[0],1))
+                #data = np.concatenate((data1, data2), axis=1)
+            #except:
+                #raise TypeError("Problema no index_string")
+        #else:
+            # Entrada de um texto apenas, continua normal
+            #inverse_data, data = neighborhood_text_samples(indexed_string_for_data_labels)
+
+        inverse_data, data = neighborhood_text_samples(indexed_string_for_data_labels)
+
         labels = classifier_fn(inverse_data)
-        distances = distance_fn(sp.sparse.csr_matrix(data))
+        if self.vectorizer == None:
+            distances = distance_fn(sp.sparse.csr_matrix(data))
+        else:
+            try:
+                distances = distance_fn(sp.sparse.csr_matrix(self.vectorizer(inverse_data))) # sp.sparse por conta do formato .
+            except:
+                raise TypeError("Incompatible 'vectorize' function. Expected function that takes list of n strings and returns (n, m) array with respectives m sized vector representations.")
+
         return data, labels, distances
